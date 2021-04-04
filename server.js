@@ -5,13 +5,17 @@ require('dotenv').config({ path: './config/config.env' })
 
 const app = express()
 
-app.get('/', async (req, res) => {
+app.get('/', (req, res) => {
+    res.send('<h1><a href="https://github.com/Organiczny/distanceAPI" target="_blank">Documentation</a></h1>')
+})
+
+app.get('/api', async (req, res) => {
+    if (check(req, res)) return
     let loc1 = { name: req.query.loc_1 }
     let loc2 = { name: req.query.loc_2 }
 
     loc1.cords = await getLoc(loc1.name)
     loc2.cords = await getLoc(loc2.name)
-
 
     let data = await getDistanceAndTime(loc1.cords, loc2.cords)
     let json = {
@@ -21,11 +25,18 @@ app.get('/', async (req, res) => {
         time: data.time
     }
 
-    console.log(JSON.stringify(json))
+    console.log('JSON= ' + JSON.stringify(json))
     res.json(json)
 })
 
-
+function check(req, res) {
+    console.log(`loc1="${req.query.loc_1}"   loc2="${req.query.loc_2}"`)
+    if (req.query.loc_1 == undefined || req.query.loc_2 == undefined) {
+        res.json({ error: 'Bad params' })
+        return true
+    }
+    return false
+}
 
 async function getDistanceAndTime(cords1, cords2) {
     let res = await axios.get(`http://router.project-osrm.org/route/v1/driving/${cords1.lon},${cords1.lat};${cords2.lon},${cords2.lat}?annotations=distance`)
